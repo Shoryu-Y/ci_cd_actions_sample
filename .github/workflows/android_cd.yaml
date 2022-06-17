@@ -1,0 +1,53 @@
+name: Android CD
+
+on:
+  push:
+  pull_request:
+    branches: [ main ]
+    types: [ closed ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Java
+        uses: actions/setup-java@v1
+        with:
+          java-version: '12.x'
+
+      - name: Setup cache
+        uses: actions/cache@v1
+        with:
+          path: /Users/runner/hostedtoolcache/flutter
+          key: ${{ runner.OS }}-flutter-install-cache
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v1
+        with:
+          flutter-version: '3.1.0'
+          channel: 'stable'
+
+      - name: Install Flutter dependencies
+        run: |
+          flutter pub get
+          flutter run build_runner build --delete-conflicting-outputs
+
+#      - name: Create keystore.properties
+#        run: |
+#          echo '${{ secrets.KEYSTORE_BASE64 }}' | base64 -d > android/release.keystore
+#          export KEYSTORE_PASSWORD='${{ secrets.KEYSTORE_PASSWORD }}'
+#          export KEY_ALIAS='${{ secrets.KEY_ALIAS }}'
+#          export KEY_PASSWORD='${{ secrets.KEY_PASSWORD }}'
+
+      - name: Build Android App Bundle
+        run: |
+          flutter build appbundle --release
+
+#      - name: Upload artifact
+#        uses: actions/upload-artifact@v1.0.0
+#        with:
+#          name: android
+#          path: build/app/outputs/flutter-apk/app-release.apk
